@@ -139,6 +139,126 @@ pub fn american_option_binomial(
     option_values[0]
 }
 
+/// Calculates the delta of an American option (call or put) using the binomial option pricing model.
+///
+/// # Arguments
+///
+/// * `s` - The current price of the underlying asset (spot price).
+/// * `k` - The strike price at which the option can be exercised.
+/// * `t` - The time to expiration in years.
+/// * `r` - The risk-free interest rate (annualized).
+/// * `sigma` - The volatility of the underlying asset's returns (annualized standard deviation).
+/// * `div_yield` - The continuous dividend yield of the underlying asset (annualized).
+/// * `steps` - The number of time steps in the binomial model (higher numbers increase accuracy).
+/// * `option_type` - The type of the option: `"call"` or `"put"`.
+///
+/// # Returns
+///
+/// The delta of the American option.
+///
+/// # Mathematical Formulation
+///
+/// The delta is approximated using the option values at the first time step:
+///
+/// ```math
+/// \Delta = \frac{V_{\text{up}} - V_{\text{down}}}{S_{\text{up}} - S_{\text{down}}}
+/// ```
+///
+/// where:
+/// - \( V_{\text{up}} \) and \( V_{\text{down}} \) are the option values after an up and down move, respectively.
+/// - \( S_{\text{up}} \) and \( S_{\text{down}} \) are the asset prices after an up and down move, respectively.
+///
+/// # Example
+///
+/// ```rust
+/// use your_crate_name::btree::american_option_binomial_delta;
+///
+/// let s = 100.0;     // Current stock price
+/// let k = 100.0;     // Strike price
+/// let t = 1.0;       // Time to expiration in years
+/// let r = 0.05;      // Risk-free interest rate
+/// let sigma = 0.2;   // Volatility
+/// let div_yield = 0.0; // Dividend yield
+/// let steps = 100;   // Number of steps in the binomial tree
+///
+/// let call_delta = american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, "call");
+/// let put_delta = american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, "put");
+///
+/// println!("American Call Option Delta: {}", call_delta);
+/// println!("American Put Option Delta: {}", put_delta);
+/// ```
+pub fn american_option_binomial_delta(
+    s: f64,
+    k: f64,
+    t: f64,
+    r: f64,
+    sigma: f64,
+    div_yield: f64,
+    steps: usize,
+    option_type: &str,
+) -> f64 {
+    let delta_t = t / steps as f64;
+
+    // Precompute constants
+    let up = f64::exp(sigma * f64::sqrt(delta_t));
+    let down = 1.0 / up;
+    let a = f64::exp((r - div_yield) * delta_t);
+    let p = (a - down) / (up - down);
+    let disc = f64::exp(-r * delta_t);
+
+    // Initialize asset prices and option values at maturity
+    let mut asset_prices = vec![0.0; steps + 1];
+    let mut option_values = vec![0.0; steps + 1];
+
+    for i in 0..=steps {
+        let j = steps - i;
+        asset_prices[i] = s * up.powi(j as i32) * down.powi(i as i32);
+        option_values[i] = match option_type {
+            "call" => f64::max(asset_prices[i] - k, 0.0),
+            "put" => f64::max(k - asset_prices[i], 0.0),
+            _ => panic!("Invalid option type! Use 'call' or 'put'"),
+        };
+    }
+
+    // Backward induction to find option value at t=0
+    for step in (1..=steps).rev() {
+        for i in 0..step {
+            let continuation_value =
+                disc * (p * option_values[i] + (1.0 - p) * option_values[i + 1]);
+
+            asset_prices[i] = asset_prices[i] / up;
+
+            let exercise_value = match option_type {
+                "call" => f64::max(asset_prices[i] - k, 0.0),
+                "put" => f64::max(k - asset_prices[i], 0.0),
+                _ => panic!("Invalid option type! Use 'call' or 'put'"),
+            };
+
+            option_values[i] = f64::max(continuation_value, exercise_value);
+        }
+
+        // Capture the option values and asset prices at the first time step
+        if step == 1 {
+            // Delta calculation
+            let v_up = option_values[0];
+            let v_down = option_values[1];
+            let s_up = asset_prices[0];
+            let s_down = asset_prices[1];
+
+            let ca = v_up - v_down; // Change in option value
+            let cu = s_up - s_down; // Change in underlying asset price
+
+            println!("CA (Change in Option Value): {}", ca);
+            println!("CU (Change in Underlying Asset Price): {}", cu);
+
+            return ca / cu; // Delta calculation
+        }
+    }
+
+    // Default return value (should not reach here)
+    0.0
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -333,6 +453,60 @@ mod tests {
         assert!(
             calculated_price >= 0.0,
             "Calculated price should be non-negative even with low number of steps"
+        );
+    }
+
+    #[test]
+    fn test_american_call_option_delta() {
+        // Test parameters
+        let s = 100.0; // Current stock price
+        let k = 100.0; // Strike price
+        let t = 1.0; // Time to expiration in years
+        let r = 0.06; // Risk-free interest rate
+        let sigma = 0.2; // Volatility
+        let div_yield = 0.0; // Dividend yield
+        let steps = 100; // Number of steps
+        let option_type = "call";
+
+        let delta =
+            american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, option_type);
+
+        // Expected delta from a reliable source or prior computation
+        let expected_delta = 0.6716014898;
+
+        let epsilon = 0.01;
+        assert!(
+            (delta - expected_delta).abs() < epsilon,
+            "Calculated delta {} differs from expected delta {}",
+            delta,
+            expected_delta
+        );
+    }
+
+    #[test]
+    fn test_american_put_option_delta() {
+        // Test parameters (aligned with QuantLib)
+        let s = 100.0;
+        let k = 100.0;
+        let t = 1.0;
+        let r = 0.05; // Risk-free interest rate adjusted to 0.05
+        let sigma = 0.2;
+        let div_yield = 0.0;
+        let steps = 1000; // Increased number of steps to 1000
+        let option_type = "put";
+
+        let delta =
+            american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, option_type);
+
+        // Expected delta from QuantLib
+        let expected_delta = -0.4148576844;
+
+        let epsilon = 1e-5;
+        assert!(
+            (delta - expected_delta).abs() < epsilon,
+            "Calculated delta {} differs from expected delta {}",
+            delta,
+            expected_delta
         );
     }
 }
