@@ -28,7 +28,7 @@ use crate::OptionKind;
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::bs::norm_cdf;
+/// use strato_pricer::bs::norm_cdf;
 ///
 /// let x = 1.0;
 /// let probability = norm_cdf(x);
@@ -39,7 +39,7 @@ pub fn norm_cdf(x: f64) -> f64 {
     0.5 * (1.0 + erf(x / f64::sqrt(2.0)))
 }
 
-/// Computes the Black-Scholes price of a European call option.
+/// Computes the Black-Scholes price of a call option.
 ///
 /// # Arguments
 ///
@@ -51,12 +51,12 @@ pub fn norm_cdf(x: f64) -> f64 {
 ///
 /// # Returns
 ///
-/// The theoretical price of the European call option.
+/// The theoretical price of the call option.
 ///
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::bs::black_scholes_call;
+/// use strato_pricer::bs::black_scholes_call;
 ///
 /// let call_price = black_scholes_call(100.0, 100.0, 1.0, 0.05, 0.2);
 /// println!("Call Price: {}", call_price);
@@ -73,7 +73,7 @@ pub fn black_scholes_call(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
     s * norm_cdf(d1) - k * f64::exp(-r * t) * norm_cdf(d2)
 }
 
-/// Computes the Black-Scholes price of a European put option.
+/// Computes the Black-Scholes price of a put option.
 ///
 /// # Arguments
 ///
@@ -85,12 +85,12 @@ pub fn black_scholes_call(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
 ///
 /// # Returns
 ///
-/// The theoretical price of the European put option.
+/// The theoretical price of the put option.
 ///
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::bs::black_scholes_put;
+/// use strato_pricer::bs::black_scholes_put;
 ///
 /// let put_price = black_scholes_put(100.0, 100.0, 1.0, 0.05, 0.2);
 /// println!("Put Price: {}", put_price);
@@ -107,7 +107,40 @@ pub fn black_scholes_put(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
     k * f64::exp(-r * t) * norm_cdf(-d2) - s * norm_cdf(-d1)
 }
 
-/// Computes the delta of a European call option using the Black-Scholes model.
+/// Computes the Black-Scholes price of a option (call or put).
+/// 
+/// # Arguments
+///
+/// * `s` - The current price of the underlying asset (spot price).
+/// * `k` - The strike price.
+/// * `t` - The time to expiration in years.
+/// * `r` - The risk-free interest rate.
+/// * `sigma` - The volatility (standard deviation of the asset's returns).
+///
+/// # Returns
+///
+/// The theoretical price of the put option.
+///
+/// # Example
+/// 
+/// ```rust
+/// use strato_pricer::OptionKind;
+/// use strato_pricer::bs::black_scholes;
+/// 
+/// let call_price = black_scholes(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Call);
+/// assert_eq!(format!("{:.2}", call_price), "10.45");
+/// 
+/// let put_price = black_scholes(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Put);
+/// assert_eq!(format!("{:.2}", put_price), "5.57");
+/// ```
+pub fn black_scholes(s: f64, k: f64, t: f64, r: f64, sigma: f64, option_kind: OptionKind) -> f64 {
+    match option_kind {
+        OptionKind::Call => black_scholes_call(s, k, t, r, sigma),
+        OptionKind::Put => black_scholes_put(s, k, t, r, sigma),
+    }
+}
+
+/// Computes the delta of a call option using the Black-Scholes model.
 ///
 /// Delta represents the sensitivity of the option's price to a $1 change in the price of the underlying asset.
 /// For a call option, delta ranges between 0 and 1.
@@ -122,12 +155,12 @@ pub fn black_scholes_put(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
 ///
 /// # Returns
 ///
-/// The delta of the European call option.
+/// The delta of the call option.
 ///
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::bs::black_scholes_call_delta;
+/// use strato_pricer::bs::black_scholes_call_delta;
 ///
 /// let delta = black_scholes_call_delta(100.0, 100.0, 1.0, 0.05, 0.2);
 /// println!("Call Delta: {}", delta);
@@ -147,7 +180,7 @@ pub fn black_scholes_call_delta(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f
     norm_cdf(d1)
 }
 
-/// Computes the delta of a European put option using the Black-Scholes model.
+/// Computes the delta of a put option using the Black-Scholes model.
 ///
 /// Delta represents the sensitivity of the option's price to a $1 change in the price of the underlying asset.
 /// For a put option, delta ranges between -1 and 0.
@@ -162,12 +195,12 @@ pub fn black_scholes_call_delta(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f
 ///
 /// # Returns
 ///
-/// The delta of the European put option.
+/// The delta of the put option.
 ///
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::bs::black_scholes_put_delta;
+/// use strato_pricer::bs::black_scholes_put_delta;
 ///
 /// let delta = black_scholes_put_delta(100.0, 100.0, 1.0, 0.05, 0.2);
 /// println!("Put Delta: {}", delta);
@@ -187,6 +220,36 @@ pub fn black_scholes_put_delta(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f6
     norm_cdf(d1) - 1.0
 }
 
+/// Computes the delta of a option (call or put) using the Black-Scholes model.
+///
+/// Delta represents the sensitivity of the option's price to a $1 change in the price of the underlying asset.
+/// For a call option, delta ranges between 0 and 1. For a put option, delta ranges between -1 and 0.
+///
+/// # Arguments
+///
+/// * `s` - The current price of the underlying asset (spot price).
+/// * `k` - The strike price.
+/// * `t` - The time to expiration in years.
+/// * `r` - The risk-free interest rate.
+/// * `sigma` - The volatility (standard deviation of the asset's returns).
+/// * `option_kind` - The type of option (call or put).
+///
+/// # Returns
+///
+/// The delta of the option.
+///
+/// # Example
+///
+/// ```rust
+/// use strato_pricer::OptionKind;
+/// use strato_pricer::bs::black_scholes_delta;
+///
+/// let call_delta = black_scholes_delta(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Call);
+/// assert_eq!(format!("{:.2}", call_delta), "0.64");
+///
+/// let put_delta = black_scholes_delta(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Put);
+/// assert_eq!(format!("{:.2}", put_delta), "-0.36");
+/// ```
 pub fn black_scholes_delta(
     s: f64,
     k: f64,

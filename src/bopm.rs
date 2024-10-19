@@ -1,12 +1,12 @@
-/// Module for pricing American options using the Binomial Option Pricing Model.
+/// Module for pricing options using the Binomial Option Pricing Model.
 ///
 /// The binomial model is a numerical method that uses a discrete-time lattice-based approach
 /// to model the possible future movements of an asset's price and to evaluate options.
 ///
-/// This module provides functions to price both American call and put options using the Cox-Ross-Rubinstein (CRR) binomial tree.
+/// This module provides functions to price both call and put options using the Cox-Ross-Rubinstein (CRR) binomial tree.
 use std::f64;
 
-/// Calculates the price of an American option (call or put) using the binomial option pricing model.
+/// Calculates the price of an option (call or put) using the binomial option pricing model.
 ///
 /// # Arguments
 ///
@@ -21,7 +21,7 @@ use std::f64;
 ///
 /// # Returns
 ///
-/// The theoretical price of the American option.
+/// The theoretical price of the option.
 ///
 /// # Mathematical Formulation
 ///
@@ -66,7 +66,7 @@ use std::f64;
 /// # Example
 ///
 /// ```rust
-/// use strato_pricer::btree::american_option_binomial;
+/// use strato_pricer::btree::binomial_pricing_model;
 ///
 /// let s = 100.0;     // Current stock price
 /// let k = 100.0;     // Strike price
@@ -76,14 +76,14 @@ use std::f64;
 /// let div_yield = 0.0; // Dividend yield
 /// let steps = 100;   // Number of steps in the binomial tree
 ///
-/// let call_price = american_option_binomial(s, k, t, r, sigma, div_yield, steps, "call");
-/// let put_price = american_option_binomial(s, k, t, r, sigma, div_yield, steps, "put");
+/// let call_price = binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, "call");
+/// let put_price = binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, "put");
 ///
 /// println!("American Call Option Price: {}", call_price);
 /// println!("American Put Option Price: {}", put_price);
-/// // Output will be the theoretical prices of the American call and put options.
+/// // Output will be the theoretical prices of the call and put options.
 /// ```
-pub fn american_option_binomial(
+pub fn binomial_pricing_model(
     s: f64,
     k: f64,
     t: f64,
@@ -139,7 +139,7 @@ pub fn american_option_binomial(
     option_values[0]
 }
 
-/// Calculates the delta of an American option (call or put) using the binomial option pricing model.
+/// Calculates the delta of an option (call or put) using the binomial option pricing model.
 ///
 /// # Arguments
 ///
@@ -154,7 +154,7 @@ pub fn american_option_binomial(
 ///
 /// # Returns
 ///
-/// The delta of the American option.
+/// The delta of the option.
 ///
 /// # Mathematical Formulation
 ///
@@ -171,7 +171,7 @@ pub fn american_option_binomial(
 /// # Example
 ///
 /// ```rust
-/// use your_crate_name::btree::american_option_binomial_delta;
+/// use strato_pricer::btree::btree_delta;
 ///
 /// let s = 100.0;     // Current stock price
 /// let k = 100.0;     // Strike price
@@ -181,8 +181,8 @@ pub fn american_option_binomial(
 /// let div_yield = 0.0; // Dividend yield
 /// let steps = 100;   // Number of steps in the binomial tree
 ///
-/// let call_delta = american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, "call");
-/// let put_delta = american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, "put");
+/// let call_delta = btree_delta(s, k, t, r, sigma, div_yield, steps, "call");
+/// let put_delta = btree_delta(s, k, t, r, sigma, div_yield, steps, "put");
 ///
 /// println!("American Call Option Delta: {}", call_delta);
 /// println!("American Put Option Delta: {}", put_delta);
@@ -279,7 +279,7 @@ mod tests {
         let expected_price = 10.969462;
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         assert!(
             (calculated_price - expected_price).abs() < 0.01,
@@ -304,7 +304,7 @@ mod tests {
         let expected_price = 5.791149;
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         assert!(
             (calculated_price - expected_price).abs() < 0.01,
@@ -329,7 +329,7 @@ mod tests {
         let expected_price = f64::max(s - k, 0.0); // Intrinsic value
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         assert_eq!(
             calculated_price, expected_price,
@@ -353,7 +353,7 @@ mod tests {
         let expected_price = f64::max(s - k, 0.0);
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         assert_eq!(
             calculated_price, expected_price,
@@ -374,11 +374,11 @@ mod tests {
         let steps = 100;
         let option_type = "put";
 
-        // For deep in-the-money American put options, immediate exercise might be optimal
+        // For deep in-the-money put options, immediate exercise might be optimal
         let expected_price = f64::max(k - s, 0.0);
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         assert!(
             (calculated_price - expected_price).abs() < 0.01 || calculated_price > expected_price,
@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_high_dividend_yield() {
-        // Test the effect of a high dividend yield on an American call option
+        // Test the effect of a high dividend yield on an call option
         let s = 100.0;
         let k = 100.0;
         let t = 1.0;
@@ -401,12 +401,12 @@ mod tests {
         let option_type = "call";
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         // Without a benchmark, we can at least check that the price is positive
         assert!(
             calculated_price > 0.0,
-            "Calculated price should be positive for an American call option with high dividend yield"
+            "Calculated price should be positive for an call option with high dividend yield"
         );
     }
 
@@ -424,7 +424,7 @@ mod tests {
 
         // Since the function does not currently handle invalid option types, it will default to pricing a put option
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         // For better error handling, consider modifying the function to return a Result
         // For now, we can check that the price is calculated
@@ -447,7 +447,7 @@ mod tests {
         let option_type = "call";
 
         let calculated_price =
-            american_option_binomial(s, k, t, r, sigma, div_yield, steps, option_type);
+            binomial_pricing_model(s, k, t, r, sigma, div_yield, steps, option_type);
 
         // The price may not be accurate, but it should be computed without errors
         assert!(
