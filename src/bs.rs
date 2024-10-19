@@ -108,7 +108,7 @@ pub fn black_scholes_put(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
 }
 
 /// Computes the Black-Scholes price of a option (call or put).
-/// 
+///
 /// # Arguments
 ///
 /// * `s` - The current price of the underlying asset (spot price).
@@ -122,14 +122,14 @@ pub fn black_scholes_put(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f64 {
 /// The theoretical price of the put option.
 ///
 /// # Example
-/// 
+///
 /// ```rust
 /// use strato_pricer::OptionKind;
 /// use strato_pricer::bs::black_scholes;
-/// 
+///
 /// let call_price = black_scholes(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Call);
 /// assert_eq!(format!("{:.2}", call_price), "10.45");
-/// 
+///
 /// let put_price = black_scholes(100.0, 100.0, 1.0, 0.05, 0.2, OptionKind::Put);
 /// assert_eq!(format!("{:.2}", put_price), "5.57");
 /// ```
