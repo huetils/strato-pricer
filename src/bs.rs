@@ -1,5 +1,7 @@
 use statrs::function::erf::erf;
 
+use crate::OptionKind;
+
 /// Calculates the cumulative distribution function (CDF) for the standard normal distribution.
 ///
 /// The standard normal distribution is a continuous probability distribution with a mean of 0 and a standard deviation of 1.
@@ -183,6 +185,20 @@ pub fn black_scholes_put_delta(s: f64, k: f64, t: f64, r: f64, sigma: f64) -> f6
     let d1 = (f64::ln(s / k) + (r + 0.5 * sigma.powi(2)) * t) / (sigma * f64::sqrt(t));
 
     norm_cdf(d1) - 1.0
+}
+
+pub fn black_scholes_delta(
+    s: f64,
+    k: f64,
+    t: f64,
+    r: f64,
+    sigma: f64,
+    option_kind: OptionKind,
+) -> f64 {
+    match option_kind {
+        OptionKind::Call => black_scholes_call_delta(s, k, t, r, sigma),
+        OptionKind::Put => black_scholes_put_delta(s, k, t, r, sigma),
+    }
 }
 
 #[cfg(test)]

@@ -187,7 +187,7 @@ pub fn american_option_binomial(
 /// println!("American Call Option Delta: {}", call_delta);
 /// println!("American Put Option Delta: {}", put_delta);
 /// ```
-pub fn american_option_binomial_delta(
+pub fn btree_delta(
     s: f64,
     k: f64,
     t: f64,
@@ -468,8 +468,7 @@ mod tests {
         let steps = 100; // Number of steps
         let option_type = "call";
 
-        let delta =
-            american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, option_type);
+        let delta = btree_delta(s, k, t, r, sigma, div_yield, steps, option_type);
 
         // Expected delta from a reliable source or prior computation
         let expected_delta = 0.6716014898;
@@ -495,8 +494,7 @@ mod tests {
         let steps = 1000; // Increased number of steps to 1000
         let option_type = "put";
 
-        let delta =
-            american_option_binomial_delta(s, k, t, r, sigma, div_yield, steps, option_type);
+        let delta = btree_delta(s, k, t, r, sigma, div_yield, steps, option_type);
 
         // Expected delta from QuantLib
         let expected_delta = -0.4148576844;
